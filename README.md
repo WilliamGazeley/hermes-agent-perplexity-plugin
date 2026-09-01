@@ -50,8 +50,10 @@ Restart Hermes (new session) and `web_search` now routes through Perplexity.
 ## Layout
 
 ```
-plugins/web/perplexity/
+<repo root>/
 ├── plugin.yaml    # manifest (kind: backend, provides: perplexity)
 ├── __init__.py    # register(ctx) hook
 └── provider.py    # PerplexitySearchWebProvider (WebSearchProvider ABC)
 ```
+
+Installable directly with `hermes plugins install WilliamGazeley/hermes-agent-perplexity-plugin --enable`.
