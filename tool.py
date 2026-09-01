@@ -9,12 +9,6 @@ rather than as a raw search backend.
 
 Non-streaming (``stream: false``) for reliable single-shot parsing.
 
-Config keys this tool responds to::
-
-    web:
-      ask_perplexity_preset: "pro-search"     # optional default preset
-      ask_perplexity_model: "perplexity/..."  # optional model override
-
 Auth env var::
 
     PERPLEXITY_API_KEY=...
@@ -155,10 +149,6 @@ def ask_perplexity_tool(
     payload["preset"] = preset if preset in _PRESETS else "pro-search"
     if model:
         payload["model"] = model
-    else:
-        env_model = os.environ.get("PERPLEXITY_RESEARCH_MODEL")
-        if env_model:
-            payload["model"] = env_model
     if max_steps:
         payload["max_steps"] = max(1, min(int(max_steps), 20))
 

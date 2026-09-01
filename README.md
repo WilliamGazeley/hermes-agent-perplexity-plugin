@@ -1,59 +1,50 @@
-# hermes-perplexity-plugin
+# hermes-agent-perplexity-plugin
 
-A [Hermes Agent](https://github.com/NousResearch/hermes-agent) web-search plugin
-backed by the [Perplexity Search API](https://docs.perplexity.ai/docs/search/quickstart)
-(`POST https://api.perplexity.ai/search`) — raw, ranked web results with no LLM
-answer pass. Search-only; pair with Firecrawl/Tavily/Exa for `web_extract`.
+A [Hermes Agent](https://github.com/NousResearch/hermes-agent) tool plugin that
+exposes an `ask_perplexity` tool backed by the [Perplexity Agent API](https://docs.perplexity.ai/docs/agent-api/quickstart)
+(`POST /v1/responses`). One call runs Perplexity's agentic loop — `web_search`,
+`fetch_url`, `people_search`, `finance_search` — and returns the synthesized
+answer with citations.
 
-Migrated from [bo17age/hermes-plugin-perplexity](https://github.com/bo17age/hermes-plugin-perplexity),
-which used the legacy `/chat/completions` + `sonar-pro` answer flow.
+> This replaces the earlier Perplexity Search API (`/search`) web-search
+> backend that this repo previously published; use the built-in `web_search`
+> (or any search backend) alongside this tool.
+
+## When to use it
+
+- **`ask_perplexity`** — one-shot questions needing multi-hop research
+  ("research this person/company", "what's the consensus on X"). Perplexity
+  fetches and reads the pages; you get the conclusion.
+- **`web_search`** (Hermes built-in) — raw ranked results when the agent
+  should reason over sources itself.
 
 ## Install
 
-Copy (or symlink) the plugin directory into your Hermes user plugins tree:
-
 ```bash
-git clone https://github.com/WilliamGazeley/hermes-agent-perplexity-plugin.git
-mkdir -p ~/.hermes/plugins/web
-cp -r hermes-agent-perplexity-plugin/plugins/web/perplexity ~/.hermes/plugins/web/
-```
-
-Then set the backend and add your key to `~/.hermes/.env`:
-
-```bash
-hermes config set web.search_backend perplexity
+hermes plugins install WilliamGazeley/hermes-agent-perplexity-plugin --enable
 echo 'PERPLEXITY_API_KEY=pplx-...' >> ~/.hermes/.env
 ```
 
-Restart Hermes (new session) and `web_search` now routes through Perplexity.
+Restart Hermes (new CLI session, or `hermes gateway restart`) and the
+`ask_perplexity` tool appears in the `web` toolset.
 
-## Optional tuning (env vars)
+## Tool parameters
 
-| Variable | Values | Effect |
+| Param | Type | Notes |
 |---|---|---|
-| `PERPLEXITY_SEARCH_RECENCY` | `hour` `day` `week` `month` `year` | `search_recency_filter` |
-| `PERPLEXITY_SEARCH_COUNTRY` | ISO 3166-1 alpha-2 (e.g. `US`, `HK`) | region-relevant results |
-| `PERPLEXITY_SEARCH_CONTEXT_SIZE` | `low` `medium` `high` | snippet depth |
-| `PERPLEXITY_SEARCH_MAX_TOKENS` | int | total snippet budget |
-| `PERPLEXITY_SEARCH_MAX_TOKENS_PER_PAGE` | int | per-page snippet budget |
+| `query` | string, required | The research question |
+| `preset` | string | `pro-search` (default, fast) or `deep-research` (slower, deeper). Verified against the live API — other values fall back to `pro-search` |
+| `max_steps` | int (1–20) | Agent tool-loop step cap |
+| `model` | string | Optional Agent API model override |
 
-## Notes
-
-- Hermes' `WebSearchProvider.search()` interface passes a single `query: str`
-  per call, so the Search API's batch-query list form is not used — one query
-  per request.
-- Perplexity's Agent API (`/v1/responses`) rejects function tools named
-  `web_search` / `search_files` (reserved names), which breaks Hermes as a
-  *model* provider out of the box. This plugin only uses the Search API and is
-  unaffected.
+The call is non-streaming (`stream: false`) and can take 1–3 minutes for
+`deep-research`-grade queries — the tool timeout is set accordingly.
 
 ## Layout
 
 ```
 <repo root>/
-├── plugin.yaml    # manifest (kind: backend, provides: perplexity)
+├── plugin.yaml    # manifest (provides_tools: ask_perplexity)
 ├── __init__.py    # register(ctx) hook
-└── provider.py    # PerplexitySearchWebProvider (WebSearchProvider ABC)
+└── tool.py        # ask_perplexity_tool implementation
 ```
-
-Installable directly with `hermes plugins install WilliamGazeley/hermes-agent-perplexity-plugin --enable`.
