@@ -1,7 +1,7 @@
-name: web-perplexity
+name: web-perplexity-ask-perplexity
 version: 1.0.0
-description: "Perplexity Search API web search backend. Uses the dedicated /search endpoint (raw ranked results, no LLM answer). Requires PERPLEXITY_API_KEY."
-author: bo17age (migrated to /search endpoint)
+description: "Perplexity Agent API ask_perplexity tool for Hermes. Exposes a `ask_perplexity` tool that runs Perplexity's agentic loop (web_search, fetch_url, people_search, finance_search) and returns the synthesized answer. Requires PERPLEXITY_API_KEY."
+author: WilliamGazeley
 kind: backend
-provides_web_providers:
-  - perplexity
+provides_tools:
+  - ask_perplexity
